@@ -14,22 +14,18 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { StackPramsList } from '../../routes/app.routes'
 import { api } from '../../services/api'
 import Toast from 'react-native-toast-message'
+import { OrderStatus } from '../../utils/records/order.record'
+import { TableStatus } from '../../utils/records/table.record'
 
 interface Table {
   id: string
   number: string
-  status: 'OCCUPIED' | 'AVAILABLE'
+  status: TableStatus.AVAILABLE | TableStatus.OCCUPIED
 }
 
 export default function Dashboard() {
   const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
   const [tables, setTables] = useState<Table[]>([])
-  const [selectedTable, setSelectedTable] = useState<{
-    id: string
-    number: string
-  } | null>(null)
-  const [isModalVisible, setIsModalVisible] = useState(false)
-  const [customerName, setCustomerName] = useState('')
 
   useEffect(() => {
     async function loadTables() {
@@ -48,36 +44,11 @@ export default function Dashboard() {
     loadTables()
   }, [])
 
-  function handleOpenOrder(tableId: string, tableNumber: string) {
-    setSelectedTable({ id: tableId, number: tableNumber })
-    setIsModalVisible(true)
-  }
-
-  async function confirmOrder() {
-    if (!customerName.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Por favor, insira o nome do cliente.', 
-      })
-      return
-    }
-
-    try {
-      const response = await api.post('/order', {
-        table_id: selectedTable?.id,
-        name: customerName
-      })
-      setIsModalVisible(false)
-      setCustomerName('')
-
-      navigation.navigate('Order', {
-        number: selectedTable?.number!,
-        order_id: response.data.data.id
-      })
-    } catch (error) {
-      console.error('Erro ao abrir pedido:', error)
-    }
+  async function handleOpenTable(tableId: string, tableNumber: string) {
+    navigation.navigate('Orders', {
+      tableNumber,
+      tableId
+    })
   }
 
   return (
@@ -87,60 +58,24 @@ export default function Dashboard() {
       <FlatList
         data={tables}
         numColumns={2}
-        keyExtractor={item => item.id}
+        keyExtractor={table => table.id}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         style={styles.tablesContainer}
-        renderItem={({ item }) => (
+        renderItem={({ item: table }) => (
           <TouchableOpacity
             style={[
               styles.tableButton,
               {
                 backgroundColor:
-                  item.status === 'OCCUPIED' ? '#ff3b3b' : '#3fffa3'
+                  table.status === TableStatus.OCCUPIED ? '#ff3b3b' : '#3fffa3'
               }
             ]}
-            onPress={() => handleOpenOrder(item.id, item.number)}
+            onPress={() => handleOpenTable(table.id, table.number)}
           >
-            <Text style={styles.tableText}>Mesa {item.number}</Text>
+            <Text style={styles.tableText}>Mesa {table.number}</Text>
           </TouchableOpacity>
         )}
       />
-
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Nome do Cliente</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Digite o nome do cliente"
-              placeholderTextColor="#999"
-              value={customerName}
-              onChangeText={setCustomerName}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={confirmOrder}
-              >
-                <Text style={styles.buttonText}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Toast />
     </SafeAreaView>
   )
 }

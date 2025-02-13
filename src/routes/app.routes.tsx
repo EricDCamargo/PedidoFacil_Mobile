@@ -2,11 +2,17 @@ import React from 'react'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 import Dashboard from '../pages/Dashboard'
-import Order from '../pages/Order'
+import Orders from '../pages/Orders'
 import FinishOrder from '../pages/FinishOrder'
+import { OrderProps } from '../types'
+import Order from '../pages/Order'
 
 export type StackPramsList = {
   Dashboard: undefined
+  Orders: {
+    tableNumber: number | string
+    tableId: string
+  }
   Order: {
     number: number | string
     order_id: string
@@ -28,6 +34,11 @@ function AppRoutes() {
         options={{ headerShown: false }}
       />
 
+      <Stack.Screen
+        name="Orders"
+        component={Orders}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="Order"
         component={Order}
