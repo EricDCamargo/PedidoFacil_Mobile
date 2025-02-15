@@ -2,14 +2,10 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 
 import { Feather } from '@expo/vector-icons'
+import { OrderItem } from '../../types'
 
 interface ItemProps {
-  data: {
-    id: string
-    product_id: string
-    name: string
-    amount: string | number
-  }
+  data: OrderItem
   deleteItem: (item_id: string) => void
 }
 
@@ -21,7 +17,7 @@ export function ListItem({ data, deleteItem }: ItemProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.item}>
-        {data.amount} - {data.name}
+        {data.amount} - {data.product.name}
       </Text>
 
       <TouchableOpacity onPress={handleDeleteItem}>

@@ -8,7 +8,11 @@ import {
   StyleSheet,
   Modal
 } from 'react-native'
-import { useRoute, useNavigation } from '@react-navigation/native'
+import {
+  useRoute,
+  useNavigation,
+  useFocusEffect
+} from '@react-navigation/native'
 import { api } from '../../services/api'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { StackPramsList } from '../../routes/app.routes'
@@ -55,6 +59,12 @@ export default function Orders() {
     loadOrders()
   }, [tableId])
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadOrders()
+    }, [tableId])
+  )
+
   function toggleOrderItems(orderId: string) {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId)
   }
@@ -74,10 +84,14 @@ export default function Orders() {
         table_id: tableId,
         name: customerName
       })
-      setOrders([...orders, response.data.data])
+      const newOrder = response.data.data
       setIsModalVisible(false)
       setCustomerName('')
       loadOrders()
+      navigation.navigate('Order', {
+        number: newOrder.number,
+        order_id: newOrder.id
+      })
     } catch (error) {
       console.error('Erro ao adicionar pedido:', error)
     }
