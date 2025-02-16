@@ -5,26 +5,29 @@ import { Feather } from '@expo/vector-icons'
 import { OrderItem } from '../../types'
 
 interface ItemProps {
-  data: OrderItem
+  item: OrderItem
   deleteItem: (item_id: string) => void
 }
 
-export function ListItem({ data, deleteItem }: ItemProps) {
+export function ListItem({ item, deleteItem }: ItemProps) {
   function handleDeleteItem() {
-    deleteItem(data.id)
+    deleteItem(item.id)
   }
+  console.log(item)
+  if (item) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.item}>
+          {item.amount} - {item.product.name} - {item.observation}
+        </Text>
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.item}>
-        {data.amount} - {data.product.name}
-      </Text>
-
-      <TouchableOpacity onPress={handleDeleteItem}>
-        <Feather name="trash-2" color="#FF3F4b" size={25} />
-      </TouchableOpacity>
-    </View>
-  )
+        <TouchableOpacity onPress={handleDeleteItem}>
+          <Feather name="trash-2" color="#FF3F4b" size={25} />
+        </TouchableOpacity>
+      </View>
+    )
+  }
+  return null
 }
 
 const styles = StyleSheet.create({

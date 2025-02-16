@@ -39,7 +39,7 @@ export function FinishOrderModal({
             data={currentOrder?.items}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <ListItem data={item} deleteItem={handleDeleteItem} />
+              <ListItem item={item} deleteItem={handleDeleteItem} />
             )}
           />
           <View style={styles.actions}>

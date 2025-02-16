@@ -109,6 +109,27 @@ export default function Orders() {
     submitOrder()
   }
 
+  async function handleFinishOrder(orderId: string) {
+    try {
+      const response = await api.put('/order/finish', {
+        order_id: orderId
+      })
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso',
+        text2: 'Pedido entregue com sucesso!'
+      })
+      loadOrders()
+    } catch (error) {
+      console.error('Erro ao finalizar pedido:', error)
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Erro ao finalizar pedido.'
+      })
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -158,10 +179,7 @@ export default function Orders() {
                 {orderStatusLabels[order.status]}
               </Text>
               <Text style={styles.itemText}>{formatCurrency(order.total)}</Text>
-              <TouchableOpacity
-                style={{ borderWidth: 1 }}
-                onPress={() => toggleOrderItems(order.id)}
-              >
+              <TouchableOpacity onPress={() => toggleOrderItems(order.id)}>
                 <Ionicons name="chevron-down-outline" size={28} color="#FFF" />
               </TouchableOpacity>
             </TouchableOpacity>
@@ -192,6 +210,14 @@ export default function Orders() {
                     </View>
                   )}
                 />
+                {order.status === OrderStatus.IN_PROGRESS && (
+                  <TouchableOpacity
+                    style={styles.finishButton}
+                    onPress={() => handleFinishOrder(order.id)}
+                  >
+                    <Text style={styles.buttonText}>ENTREGAR PEDIDO</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
@@ -273,12 +299,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   item: {
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 60,
-    margin: 5,
+    minHeight: 60,
     borderRadius: 8
   },
   clientName: {
@@ -287,11 +311,11 @@ const styles = StyleSheet.create({
     color: 'white'
   },
   itemText: {
-    flex: 1,
-    textAlign: 'left',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff'
+    color: '#fff',
+    flex: 1,
+    textAlign: 'center'
   },
   addButton: {
     backgroundColor: '#3fffa3',
@@ -372,5 +396,12 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRadius: 5,
     marginTop: 5
+  },
+  finishButton: {
+    backgroundColor: '#3fffa3',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10
   }
 })

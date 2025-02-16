@@ -156,11 +156,16 @@ export default function Order() {
     }
   }
 
-  function handleFinishOrder() {
-    navigation.navigate('FinishOrder', {
-      number: route.params?.number,
-      order_id: route.params?.order_id
-    })
+  async function handleFinishOrder() {
+    try {
+      const res = await api.put('/order/send', {
+        order_id: currentOrder?.id
+      })
+
+      navigation.goBack()
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (
@@ -241,6 +246,9 @@ export default function Order() {
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Adicionar ao pedido</Text>
             <Text style={styles.modalSubtitle}>{productSelected?.name}</Text>
+            <Text style={styles.modalSubtitle}>
+              {productSelected?.description}
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Quantidade"
