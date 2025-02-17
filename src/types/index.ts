@@ -1,3 +1,5 @@
+import { OrderStatus } from '../utils/records/order.record'
+
 export interface Category {
   id: string
   name: string
@@ -18,7 +20,7 @@ export interface OrderProps {
   id: string
   number: number
   table_id: string
-  status: string
+  status: OrderStatus
   name: string
   total: number
   created_at: string

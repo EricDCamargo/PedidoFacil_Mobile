@@ -118,7 +118,7 @@ export default function Orders() {
 
   return (
     <View style={styles.container}>
-      <Toast />
+      <Toast position="bottom" />
       <View style={styles.header}>
         <Text style={styles.title}>Pedidos - Mesa: {tableNumber}</Text>
         <TouchableOpacity
@@ -144,8 +144,7 @@ export default function Orders() {
                 style={[
                   styles.status,
                   {
-                    backgroundColor:
-                      orderStatusColors[order.status as OrderStatus].background
+                    backgroundColor: orderStatusColors[order.status].background
                   }
                 ]}
               >

@@ -11,7 +11,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { StackPramsList } from '../../routes/app.routes'
 import { api } from '../../services/api'
-import { TableStatus } from '../../utils/records/table.record'
+import {
+  TableStatus,
+  tableStatusColors
+} from '../../utils/records/table.record'
 import { AuthContext } from '../../contexts/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 
@@ -72,8 +75,7 @@ export default function Dashboard() {
             style={[
               styles.tableButton,
               {
-                backgroundColor:
-                  table.status === TableStatus.OCCUPIED ? '#ff3b3b' : '#3fffa3'
+                backgroundColor: tableStatusColors[table.status]
               }
             ]}
             onPress={() => handleOpenTable(table.id, table.number)}

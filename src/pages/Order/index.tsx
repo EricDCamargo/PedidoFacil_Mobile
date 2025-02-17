@@ -10,7 +10,12 @@ import {
   Alert,
   Image
 } from 'react-native'
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native'
+import {
+  useRoute,
+  RouteProp,
+  useNavigation,
+  useFocusEffect
+} from '@react-navigation/native'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import { api } from '../../services/api'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -18,6 +23,8 @@ import { StackPramsList } from '../../routes/app.routes'
 import { Picker } from '@react-native-picker/picker'
 import { OrderDetails, Product } from '../../types'
 import { FinishOrderModal } from '../../components/FinishOrderModal'
+import { formatCurrency } from '../../utils'
+import Toast from 'react-native-toast-message'
 
 type RouteDetailParams = {
   Order: {
@@ -46,8 +53,9 @@ export default function Order() {
   })
 
   const [products, setProducts] = useState<Product[] | []>([])
-  const [filteredProducts, setFilteredProducts] = useState<Product[] | []>([])
   const [productSelected, setProductSelected] = useState<Product | undefined>()
+
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | []>([])
 
   const [modalProductVisible, setModalProductVisible] = useState(false)
   const [modalOrderVisible, setModalOrderVisible] = useState(false)
@@ -58,17 +66,27 @@ export default function Order() {
   const [currentOrder, setCurrentOrder] = useState<OrderDetails>()
 
   useEffect(() => {
-    async function loadInfo() {
-      const categoryResponse = await api.get('/category')
-      setCategory([{ id: '', name: 'Todos' }, ...categoryResponse.data.data])
-      setCategorySelected({ id: '', name: 'Todos' })
+    async function loadData() {
+      try {
+        const [categoryResponse, productResponse, orderResponse] =
+          await Promise.all([
+            api.get('/category'),
+            api.get('/products'),
+            api.get(`/order/detail?order_id=${route.params.order_id}`)
+          ])
 
-      const productResponse = await api.get('/products')
-      setProducts(productResponse.data.data)
-      setFilteredProducts(productResponse.data.data)
+        setCategory([{ id: '', name: 'Todos' }, ...categoryResponse.data.data])
+        setCategorySelected({ id: '', name: 'Todos' })
+
+        setProducts(productResponse.data.data)
+        setCurrentOrder(orderResponse.data.data)
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error)
+      }
     }
-    loadInfo()
-  }, [])
+
+    loadData()
+  }, [route.params.order_id])
 
   async function loadOrderDetails() {
     try {
@@ -80,10 +98,6 @@ export default function Order() {
       console.error('Erro ao buscar detalhes do pedido:', error)
     }
   }
-
-  useEffect(() => {
-    loadOrderDetails()
-  }, [route.params.order_id])
 
   useEffect(() => {
     filterProducts()
@@ -122,25 +136,51 @@ export default function Order() {
     setCategorySelected(selectedCategory)
   }
 
+  function handleChangeAmount(text: string) {
+    const value = Number(text)
+    if (Number.isInteger(value)) {
+      setAmount(value)
+    } else {
+      Alert.alert(
+        'Erro',
+        'Digite uma quantidade válida (número inteiro positivo).'
+      )
+    }
+  }
+
   async function handleAdd() {
     if (!productSelected) {
       Alert.alert('Erro', 'Selecione um produto.')
       return
     }
+    if (amount <= 0 || !Number.isInteger(amount)) {
+      Alert.alert(
+        'Erro',
+        'Digite uma quantidade válida (número inteiro positivo).'
+      )
+      return
+    }
     try {
       await api.post('/order/add', {
-        order_id: route.params.order_id,
+        order_id: currentOrder?.id,
         product_id: productSelected.id,
-        amount: Number(amount),
+        amount,
         observation
       })
-      loadOrderDetails()
+      await loadOrderDetails()
       setModalProductVisible(false)
       setAmount(0)
       setObservation('')
     } catch (err) {
       console.log(err)
     }
+  }
+
+  const handleCancel = () => {
+    setModalProductVisible(false)
+    setProductSelected(undefined)
+    setAmount(0)
+    setObservation('')
   }
 
   async function handleDeleteItem(item_id: string) {
@@ -158,10 +198,15 @@ export default function Order() {
 
   async function handleFinishOrder() {
     try {
-      const res = await api.put('/order/send', {
+      await api.put('/order/send', {
         order_id: currentOrder?.id
       })
 
+      Toast.show({
+        type: 'success',
+        text1: 'Pedido finalizado!',
+        text2: 'Seu pedido foi enviado para a cozinha.'
+      })
       navigation.goBack()
     } catch (error) {
       console.error(error)
@@ -190,43 +235,54 @@ export default function Order() {
         </View>
       </View>
 
-      {category.length !== 0 && (
-        <Picker
-          selectedValue={categorySelected?.id}
-          style={styles.picker}
-          onValueChange={itemValue => handleChangeCategory(itemValue)}
-        >
-          {category.map(cat => (
-            <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
-          ))}
-        </Picker>
-      )}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Pesquisar produtos"
-        placeholderTextColor="#999"
-        value={search}
-        onChangeText={setSearch}
-      />
-
-      <FlatList
-        data={filteredProducts}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.productItem}
-            onPress={() => {
-              setProductSelected(item)
-              setModalProductVisible(true)
-            }}
+      <View style={styles.bodyContent}>
+        {category[0] && (
+          <Picker
+            selectedValue={categorySelected?.id}
+            style={styles.picker}
+            mode="dropdown"
+            dropdownIconColor={'white'}
+            onValueChange={itemValue => handleChangeCategory(itemValue)}
           >
-            <Image source={{ uri: item.banner }} style={styles.productImage} />
-            <Text style={styles.productText}>{item.name}</Text>
-          </TouchableOpacity>
+            {category.map(cat => (
+              <Picker.Item
+                color="white"
+                style={styles.pickerItem}
+                key={cat.id}
+                label={cat.name}
+                value={cat.id}
+              />
+            ))}
+          </Picker>
         )}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Pesquisar produtos"
+          placeholderTextColor="#999"
+          value={search}
+          onChangeText={setSearch}
+        />
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.productItem}
+              onPress={() => {
+                setProductSelected(item)
+                setModalProductVisible(true)
+              }}
+            >
+              <Image
+                source={{ uri: item.banner }}
+                style={styles.productImage}
+              />
+              <Text style={styles.productText}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
 
       <FinishOrderModal
         currentOrder={currentOrder}
@@ -255,8 +311,14 @@ export default function Order() {
               placeholderTextColor="#999"
               keyboardType="numeric"
               value={amount.toString()}
-              onChangeText={text => setAmount(Number(text))}
+              onChangeText={handleChangeAmount}
             />
+            <Text style={styles.modalSubtitle}>
+              Total:{' '}
+              {formatCurrency(
+                productSelected?.price ? productSelected.price * amount : 0
+              )}
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Observação"
@@ -267,7 +329,7 @@ export default function Order() {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setModalProductVisible(false)}
+                onPress={handleCancel}
               >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
@@ -311,23 +373,25 @@ const styles = StyleSheet.create({
     color: '#FFF',
     marginRight: 14
   },
+  bodyContent: {
+    gap: 10
+  },
   input: {
     backgroundColor: '#101026',
     borderRadius: 4,
     width: '100%',
     height: 40,
-    marginBottom: 12,
     justifyContent: 'center',
     paddingHorizontal: 8,
     color: '#FFF',
     fontSize: 20
   },
   picker: {
-    height: 50,
-    width: '100%',
     color: '#FFF',
-    backgroundColor: '#101026',
-    marginBottom: 12
+    backgroundColor: '#101026'
+  },
+  pickerItem: {
+    backgroundColor: '#101026'
   },
   qtdContainer: {
     flexDirection: 'row',
