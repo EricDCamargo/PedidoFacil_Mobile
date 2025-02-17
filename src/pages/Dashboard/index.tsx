@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useContext } from 'react'
 import {
   Text,
   SafeAreaView,
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Modal,
-  TextInput,
   View
 } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { StackPramsList } from '../../routes/app.routes'
 import { api } from '../../services/api'
-import Toast from 'react-native-toast-message'
-import { OrderStatus } from '../../utils/records/order.record'
 import { TableStatus } from '../../utils/records/table.record'
+import { AuthContext } from '../../contexts/AuthContext'
+import { Ionicons } from '@expo/vector-icons'
 
 interface Table {
   id: string
@@ -25,24 +23,23 @@ interface Table {
 
 export default function Dashboard() {
   const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
+  const { signOut, user } = useContext(AuthContext)
   const [tables, setTables] = useState<Table[]>([])
 
-  useEffect(() => {
-    async function loadTables() {
-      try {
-        const response = await api.get('/tables')
-        setTables(response.data.data)
-        Toast.show({
-          type: 'success',
-          text1: 'Sucesso',
-          text2: response.data.message
-        })
-      } catch (error) {
-        console.error('Erro ao buscar mesas:', error)
-      }
+  async function loadTables() {
+    try {
+      const response = await api.get('/tables')
+      setTables(response.data.data)
+    } catch (error) {
+      console.error('Erro ao buscar mesas:', error)
     }
-    loadTables()
-  }, [])
+  }
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadTables()
+    }, [])
+  )
 
   async function handleOpenTable(tableId: string, tableNumber: string) {
     navigation.navigate('Orders', {
@@ -51,10 +48,19 @@ export default function Dashboard() {
     })
   }
 
+  async function handleLogOff() {
+    await signOut()
+  }
+
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.userName}>Olá, {user?.name}</Text>
+        <TouchableOpacity onPress={handleLogOff} style={styles.logOffButton}>
+          <Ionicons name="log-out-outline" size={40} color="white" />
+        </TouchableOpacity>
+      </View>
       <Text style={styles.title}>Selecione uma mesa</Text>
-
       <FlatList
         data={tables}
         numColumns={2}
@@ -86,13 +92,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 15,
-    backgroundColor: '#1d1d2e'
+    backgroundColor: '#1d1d2e',
+    gap: 10
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#FFF'
+  },
+  logOffButton: {
+    padding: 10,
+    borderRadius: 5
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFF',
-    marginBottom: 20
+    marginVertical: 10
   },
   tablesContainer: {
     width: '90%'
@@ -107,58 +130,6 @@ const styles = StyleSheet.create({
   },
   tableText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#101026'
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: '#FFF',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center'
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15
-  },
-  input: {
-    width: '100%',
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 20
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%'
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 10,
-    alignItems: 'center'
-  },
-  confirmButton: {
-    flex: 1,
-    backgroundColor: '#3fffa3',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center'
-  },
-  buttonText: {
-    fontSize: 16,
     fontWeight: 'bold',
     color: '#101026'
   }

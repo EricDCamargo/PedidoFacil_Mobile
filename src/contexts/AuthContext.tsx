@@ -72,7 +72,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { id, name, token } = response.data.data
 
       const data = {
-        ...response.data.data 
+        ...response.data.data
       }
 
       await AsyncStorage.setItem('@userSession', JSON.stringify(data))

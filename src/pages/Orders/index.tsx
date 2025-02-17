@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Text,
   View,
@@ -43,21 +43,12 @@ export default function Orders() {
 
   async function loadOrders() {
     try {
-      const response = await api.get(`/orders?table_id=${tableId}`)
-      setOrders(response.data.data)
-      Toast.show({
-        type: 'success',
-        text1: 'Sucesso',
-        text2: response.data.message
-      })
+      const res = await api.get(`/orders?table_id=${tableId}`)
+      setOrders(res.data.data)
     } catch (error) {
       console.error('Erro ao buscar pedidos:', error)
     }
   }
-
-  useEffect(() => {
-    loadOrders()
-  }, [tableId])
 
   useFocusEffect(
     React.useCallback(() => {
@@ -70,7 +61,7 @@ export default function Orders() {
   }
 
   function handleOrderPress(order: OrderProps) {
-    if (order.status === 'DRAFT') {
+    if (order.status === OrderStatus.DRAFT) {
       navigation.navigate('Order', {
         number: order.number,
         order_id: order.id
@@ -80,14 +71,14 @@ export default function Orders() {
 
   async function submitOrder() {
     try {
-      const response = await api.post('/order', {
+      const res = await api.post('/order', {
         table_id: tableId,
         name: customerName
       })
-      const newOrder = response.data.data
+      const newOrder = res.data.data
       setIsModalVisible(false)
       setCustomerName('')
-      loadOrders()
+      await loadOrders()
       navigation.navigate('Order', {
         number: newOrder.number,
         order_id: newOrder.id
@@ -111,27 +102,23 @@ export default function Orders() {
 
   async function handleFinishOrder(orderId: string) {
     try {
-      const response = await api.put('/order/finish', {
+      const res = await api.put('/order/finish', {
         order_id: orderId
       })
       Toast.show({
         type: 'success',
         text1: 'Sucesso',
-        text2: 'Pedido entregue com sucesso!'
+        text2: res.data.message
       })
       loadOrders()
     } catch (error) {
       console.error('Erro ao finalizar pedido:', error)
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Erro ao finalizar pedido.'
-      })
     }
   }
 
   return (
     <View style={styles.container}>
+      <Toast />
       <View style={styles.header}>
         <Text style={styles.title}>Pedidos - Mesa: {tableNumber}</Text>
         <TouchableOpacity
@@ -141,88 +128,102 @@ export default function Orders() {
           <Ionicons name="add-circle" size={28} color="#FFF" />
         </TouchableOpacity>
       </View>
-      <View style={styles.headerRow}>
-        <Text style={styles.headerText}>Cliente</Text>
-        <Text style={styles.headerText}> | </Text>
-        <Text style={styles.headerText}>Status</Text>
-        <Text style={styles.headerText}> | </Text>
-        <Text style={styles.headerText}>Valor P</Text>
-        <Text style={styles.headerText}> | </Text>
-        <Text style={styles.headerText}>Detalhes</Text>
-      </View>
-      <FlatList
-        data={orders}
-        keyExtractor={order => order.id}
-        renderItem={({ item: order }) => (
-          <View
-            style={[
-              styles.status,
-              {
-                backgroundColor:
-                  orderStatusColors[order.status as OrderStatus].background
-              }
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.item}
-              onPress={() => handleOrderPress(order)}
-            >
-              <Text style={styles.itemText}>{order.name}</Text>
-              <Text
+      {orders[0] ? (
+        <>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerText}>Cliente</Text>
+            <Text style={styles.headerText}>Status</Text>
+            <Text style={styles.headerText}>Valor P</Text>
+            <Text style={styles.headerText}>Detalhes</Text>
+          </View>
+          <FlatList
+            data={orders}
+            keyExtractor={order => order.id}
+            renderItem={({ item: order }) => (
+              <View
                 style={[
-                  styles.itemText,
+                  styles.status,
                   {
-                    color: orderStatusColors[order.status as OrderStatus].color
+                    backgroundColor:
+                      orderStatusColors[order.status as OrderStatus].background
                   }
                 ]}
               >
-                {orderStatusLabels[order.status]}
-              </Text>
-              <Text style={styles.itemText}>{formatCurrency(order.total)}</Text>
-              <TouchableOpacity onPress={() => toggleOrderItems(order.id)}>
-                <Ionicons name="chevron-down-outline" size={28} color="#FFF" />
-              </TouchableOpacity>
-            </TouchableOpacity>
-
-            {expandedOrderId === order.id && order.items[0] && (
-              <View>
-                <View style={styles.headerRow}>
-                  <Text style={styles.headerText}>Qnt</Text>
-                  <Text style={styles.headerText}>Desc</Text>
-                  <Text style={styles.headerText}>Valor Un</Text>
-                  <Text style={styles.headerText}>Valor Total</Text>
-                </View>
-                <FlatList
-                  data={order.items}
-                  keyExtractor={subItem => subItem.id}
-                  renderItem={({ item: subItem }) => (
-                    <View style={styles.subItem}>
-                      <Text style={styles.subItemText}>{subItem.amount}X</Text>
-                      <Text style={styles.subItemText}>
-                        {subItem.product.name}
-                      </Text>
-                      <Text style={styles.subItemText}>
-                        {formatCurrency(subItem.unit_value)}
-                      </Text>
-                      <Text style={styles.subItemText}>
-                        {formatCurrency(subItem.total_value)}
-                      </Text>
-                    </View>
-                  )}
-                />
-                {order.status === OrderStatus.IN_PROGRESS && (
-                  <TouchableOpacity
-                    style={styles.finishButton}
-                    onPress={() => handleFinishOrder(order.id)}
+                <TouchableOpacity
+                  style={styles.item}
+                  onPress={() => handleOrderPress(order)}
+                >
+                  <Text style={styles.itemText}>{order.name}</Text>
+                  <Text
+                    style={[
+                      styles.itemText,
+                      {
+                        color:
+                          orderStatusColors[order.status as OrderStatus].color
+                      }
+                    ]}
                   >
-                    <Text style={styles.buttonText}>ENTREGAR PEDIDO</Text>
+                    {orderStatusLabels[order.status]}
+                  </Text>
+                  <Text style={styles.itemText}>
+                    {formatCurrency(order.total)}
+                  </Text>
+                  <TouchableOpacity onPress={() => toggleOrderItems(order.id)}>
+                    <Ionicons
+                      name="chevron-down-outline"
+                      size={28}
+                      color="#FFF"
+                    />
                   </TouchableOpacity>
+                </TouchableOpacity>
+
+                {expandedOrderId === order.id && order.items[0] && (
+                  <View>
+                    <View style={styles.headerRow}>
+                      <Text style={styles.headerText}>Qnt</Text>
+                      <Text style={styles.headerText}>Desc</Text>
+                      <Text style={styles.headerText}>Valor Un</Text>
+                      <Text style={styles.headerText}>Valor Total</Text>
+                    </View>
+                    <FlatList
+                      data={order.items}
+                      keyExtractor={subItem => subItem.id}
+                      renderItem={({ item: subItem }) => (
+                        <View style={styles.subItem}>
+                          <Text style={styles.subItemText}>
+                            {subItem.amount}X
+                          </Text>
+                          <Text style={styles.subItemText}>
+                            {subItem.product.name}
+                          </Text>
+                          <Text style={styles.subItemText}>
+                            {formatCurrency(subItem.unit_value)}
+                          </Text>
+                          <Text style={styles.subItemText}>
+                            {formatCurrency(subItem.total_value)}
+                          </Text>
+                        </View>
+                      )}
+                    />
+                    {order.status === OrderStatus.IN_PROGRESS && (
+                      <TouchableOpacity
+                        style={styles.finishButton}
+                        onPress={() => handleFinishOrder(order.id)}
+                      >
+                        <Text style={styles.buttonText}>ENTREGAR PEDIDO</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 )}
               </View>
             )}
-          </View>
-        )}
-      />
+          />
+        </>
+      ) : (
+        <View style={styles.noOrdersContainer}>
+          <Text style={styles.noOrdersText}>Nenhum pedido encontrado.</Text>
+        </View>
+      )}
 
       <Modal
         visible={isModalVisible}
@@ -403,5 +404,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 10
+  },
+  noOrdersContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  noOrdersText: {
+    fontSize: 18,
+    color: '#FFF'
   }
 })
