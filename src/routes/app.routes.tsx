@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import Dashboard from '../pages/Dashboard'
 import Orders from '../pages/Orders'
 import FinishOrder from '../pages/FinishOrder'
-import { OrderProps } from '../types'
 import Order from '../pages/Order'
 
 export type StackPramsList = {
