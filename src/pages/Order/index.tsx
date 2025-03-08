@@ -10,14 +10,8 @@ import {
   Alert,
   Image
 } from 'react-native'
-import {
-  useRoute,
-  RouteProp,
-  useNavigation,
-  useFocusEffect
-} from '@react-navigation/native'
+import { useRoute, useNavigation } from '@react-navigation/native'
 import { Feather, Ionicons } from '@expo/vector-icons'
-import { api } from '../../services/api'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { StackPramsList } from '../../routes/app.routes'
 import { Picker } from '@react-native-picker/picker'
@@ -25,12 +19,11 @@ import { OrderDetails, Product } from '../../types'
 import { FinishOrderModal } from '../../components/FinishOrderModal'
 import { formatCurrency } from '../../utils'
 import Toast from 'react-native-toast-message'
+import { serviceConsumer } from '../../services/service.consumer'
 
-type RouteDetailParams = {
-  Order: {
-    number: string | number
-    order_id: string
-  }
+interface RouteParams {
+  number: string | number
+  order_id: string
 }
 
 export type CategoryProps = {
@@ -38,24 +31,18 @@ export type CategoryProps = {
   name: string
 }
 
-type OrderRouteProps = RouteProp<RouteDetailParams, 'Order'>
-
 export default function Order() {
-  const route = useRoute<OrderRouteProps>()
+  const route = useRoute()
+  const { order_id, number } = route.params as RouteParams
   const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
 
   const [category, setCategory] = useState<CategoryProps[] | []>([])
-  const [categorySelected, setCategorySelected] = useState<
-    CategoryProps | undefined
-  >({
-    id: '',
-    name: 'Todos'
-  })
+  const [categorySelected, setCategorySelected] = useState<CategoryProps>()
 
   const [products, setProducts] = useState<Product[] | []>([])
   const [productSelected, setProductSelected] = useState<Product | undefined>()
 
-  const [filteredProducts, setFilteredProducts] = useState<Product[] | []>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | []>()
 
   const [modalProductVisible, setModalProductVisible] = useState(false)
   const [modalOrderVisible, setModalOrderVisible] = useState(false)
@@ -67,36 +54,29 @@ export default function Order() {
 
   useEffect(() => {
     async function loadData() {
-      try {
-        const [categoryResponse, productResponse, orderResponse] =
-          await Promise.all([
-            api.get('/category'),
-            api.get('/products'),
-            api.get(`/order/detail?order_id=${route.params.order_id}`)
-          ])
+      const [categoryResponse, productResponse, orderResponse] =
+        await Promise.all([
+          serviceConsumer().executeGet('/category'),
+          serviceConsumer().executeGet('/products'),
+          serviceConsumer().executeGet(`/order/detail?order_id=${order_id}`)
+        ])
 
-        setCategory([{ id: '', name: 'Todos' }, ...categoryResponse.data.data])
-        setCategorySelected({ id: '', name: 'Todos' })
-
-        setProducts(productResponse.data.data)
-        setCurrentOrder(orderResponse.data.data)
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error)
-      }
+      setCategory([{ id: '', name: 'Todos' }, ...categoryResponse.data])
+      setCategorySelected({ id: '', name: 'Todos' })
+      setProducts(productResponse.data)
+      setCurrentOrder(orderResponse.data)
     }
 
     loadData()
-  }, [route.params.order_id])
+  }, [order_id])
 
   async function loadOrderDetails() {
-    try {
-      const response = await api.get(
-        `/order/detail?order_id=${route.params.order_id}`
-      )
-      setCurrentOrder(response.data.data)
-    } catch (error) {
-      console.error('Erro ao buscar detalhes do pedido:', error)
-    }
+    const res = await serviceConsumer().executeGet('order/detail', { order_id })
+    setCurrentOrder(res.data)
+    Toast.show({
+      type: 'info',
+      text1: res.message
+    })
   }
 
   useEffect(() => {
@@ -105,7 +85,7 @@ export default function Order() {
 
   function filterProducts() {
     let filtered = products
-    if (categorySelected && categorySelected.id !== '') {
+    if (categorySelected && categorySelected.id) {
       filtered = filtered.filter(
         product => product.category_id === categorySelected.id
       )
@@ -119,21 +99,16 @@ export default function Order() {
   }
 
   async function handleCloseOrder() {
-    try {
-      await api.delete('/order', {
-        params: {
-          order_id: route.params?.order_id
-        }
-      })
+    const res = await serviceConsumer().executeDelete('/order', { order_id })
+    if (res.isOk) {
       navigation.goBack()
-    } catch (err) {
-      console.log(err)
     }
   }
 
   function handleChangeCategory(itemValue: string) {
     const selectedCategory = category.find(cat => cat.id === itemValue)
-    setCategorySelected(selectedCategory)
+
+    setCategorySelected(selectedCategory!)
   }
 
   function handleChangeAmount(text: string) {
@@ -160,20 +135,27 @@ export default function Order() {
       )
       return
     }
-    try {
-      await api.post('/order/add', {
-        order_id: currentOrder?.id,
-        product_id: productSelected.id,
-        amount,
-        observation
-      })
+    if (!currentOrder) {
+      Alert.alert('Erro', 'Um produto não foi selecionado')
+      return
+    }
+    const data = {
+      order_id: currentOrder.id,
+      product_id: productSelected.id,
+      amount,
+      observation
+    }
+    const res = await serviceConsumer().executePost('/order/add', data)
+    if (res.isOk) {
       await loadOrderDetails()
       setModalProductVisible(false)
       setAmount(0)
       setObservation('')
-    } catch (err) {
-      console.log(err)
     }
+    Toast.show({
+      type: 'info',
+      text1: res.message
+    })
   }
 
   const handleCancel = () => {
@@ -184,40 +166,38 @@ export default function Order() {
   }
 
   async function handleDeleteItem(item_id: string) {
-    try {
-      await api.delete('/order/remove', {
-        params: {
-          item_id: item_id
-        }
-      })
-      loadOrderDetails()
-    } catch (error) {
-      console.log(error)
-    }
+    const res = await serviceConsumer().executeDelete('order/remove', {
+      item_id
+    })
+    Toast.show({
+      type: 'info',
+      text1: res.message
+    })
+    await loadOrderDetails()
   }
 
   async function handleFinishOrder() {
-    try {
-      await api.put('/order/send', {
+    const res = await serviceConsumer().executePut(
+      '/order/send',
+      {},
+      {
         order_id: currentOrder?.id
-      })
-
-      Toast.show({
-        type: 'success',
-        text1: 'Pedido finalizado!',
-        text2: 'Seu pedido foi enviado para a cozinha.'
-      })
+      }
+    )
+    if (res.isOk) {
       navigation.goBack()
-    } catch (error) {
-      console.error(error)
     }
+    Toast.show({
+      type: 'info',
+      text1: res.message
+    })
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.hTitleContainer}>
-          <Text style={styles.title}>Pedido nº {route.params.number}</Text>
+          <Text style={styles.title}>Pedido nº {number}</Text>
 
           <TouchableOpacity onPress={handleCloseOrder}>
             <Feather name="trash-2" size={28} color="#FF3F4b" />

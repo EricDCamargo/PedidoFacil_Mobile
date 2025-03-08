@@ -1,4 +1,14 @@
 import { OrderStatus } from '../utils/records/order.record'
+import { TableStatus } from '../utils/records/table.record'
+import { UserRole } from '../utils/records/user.record'
+
+export interface UserProps {
+  id: string
+  name: string
+  email: string
+  role: UserRole | ''
+  token: string
+}
 
 export interface Category {
   id: string
@@ -56,10 +66,10 @@ export interface OrderItem {
   product: Product
 }
 
-interface Table {
+export interface Table {
   id: string
   number: string
-  status: string
+  status: TableStatus
   created_at: string
   updated_at: string
 }

@@ -1,4 +1,10 @@
-import React, { useState, useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
+import { useNavigation } from '@react-navigation/native'
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { StackPramsList } from '../../routes/app.routes'
+import { AuthContext } from '../../contexts/AuthContext'
+import { Ionicons } from '@expo/vector-icons'
+import { TableContext } from '../../contexts/TableContext'
 import {
   Text,
   SafeAreaView,
@@ -7,47 +13,25 @@ import {
   StyleSheet,
   View
 } from 'react-native'
-import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { StackPramsList } from '../../routes/app.routes'
-import { api } from '../../services/api'
+
 import {
   TableStatus,
   tableStatusColors
 } from '../../utils/records/table.record'
-import { AuthContext } from '../../contexts/AuthContext'
-import { Ionicons } from '@expo/vector-icons'
-
-interface Table {
-  id: string
-  number: string
-  status: TableStatus.AVAILABLE | TableStatus.OCCUPIED
-}
 
 export default function Dashboard() {
   const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
   const { signOut, user } = useContext(AuthContext)
-  const [tables, setTables] = useState<Table[]>([])
+  const { tables, fetchTables } = useContext(TableContext)
 
-  async function loadTables() {
-    try {
-      const response = await api.get('/tables')
-      setTables(response.data.data)
-    } catch (error) {
-      console.error('Erro ao buscar mesas:', error)
-    }
-  }
+  useEffect(() => {
+    fetchTables()
+  }, [])
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadTables()
-    }, [])
-  )
-
-  async function handleOpenTable(tableId: string, tableNumber: string) {
+  async function handleOpenTable(table_id: string, number: string) {
     navigation.navigate('Orders', {
-      tableNumber,
-      tableId
+      table_id,
+      number
     })
   }
 
@@ -75,7 +59,7 @@ export default function Dashboard() {
             style={[
               styles.tableButton,
               {
-                backgroundColor: tableStatusColors[table.status]
+                backgroundColor: tableStatusColors[table.status as TableStatus]
               }
             ]}
             onPress={() => handleOpenTable(table.id, table.number)}

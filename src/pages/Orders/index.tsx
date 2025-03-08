@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   Text,
   View,
@@ -25,15 +25,16 @@ import {
   orderStatusColors,
   orderStatusLabels
 } from '../../utils/records/order.record'
+import { serviceConsumer } from '../../services/service.consumer'
 
 interface RouteParams {
-  tableNumber: string
-  tableId: string
+  table_id: string
+  number: string
 }
 
 export default function Orders() {
   const route = useRoute()
-  const { tableNumber, tableId } = route.params as RouteParams
+  const { table_id, number } = route.params as RouteParams
   const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
 
   const [orders, setOrders] = useState<OrderProps[]>([])
@@ -42,18 +43,14 @@ export default function Orders() {
   const [customerName, setCustomerName] = useState('')
 
   async function loadOrders() {
-    try {
-      const res = await api.get(`/orders?table_id=${tableId}`)
-      setOrders(res.data.data)
-    } catch (error) {
-      console.error('Erro ao buscar pedidos:', error)
-    }
+    const res = await serviceConsumer().executeGet('/orders', { table_id })
+    setOrders(res.data)
   }
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       loadOrders()
-    }, [tableId])
+    }, [table_id])
   )
 
   function toggleOrderItems(orderId: string) {
@@ -70,21 +67,20 @@ export default function Orders() {
   }
 
   async function submitOrder() {
-    try {
-      const res = await api.post('/order', {
-        table_id: tableId,
-        name: customerName
-      })
-      const newOrder = res.data.data
+    const res = await serviceConsumer().executePost('/order', {
+      table_id,
+      name: customerName
+    })
+    const data = res.data
+
+    if (res.isOk) {
       setIsModalVisible(false)
       setCustomerName('')
       await loadOrders()
       navigation.navigate('Order', {
-        number: newOrder.number,
-        order_id: newOrder.id
+        number: data.number,
+        order_id: data.id
       })
-    } catch (error) {
-      console.error('Erro ao adicionar pedido:', error)
     }
   }
 
@@ -100,27 +96,25 @@ export default function Orders() {
     submitOrder()
   }
 
-  async function handleFinishOrder(orderId: string) {
-    try {
-      const res = await api.put('/order/finish', {
-        order_id: orderId
-      })
-      Toast.show({
-        type: 'success',
-        text1: 'Sucesso',
-        text2: res.data.message
-      })
-      loadOrders()
-    } catch (error) {
-      console.error('Erro ao finalizar pedido:', error)
-    }
+  async function handleFinishOrder(order_id: string) {
+    const res = await serviceConsumer().executePut(
+      '/order/finish',
+      {},
+      { order_id }
+    )
+
+    Toast.show({
+      type: 'info',
+      text1: res.message
+    })
+    await loadOrders()
   }
 
   return (
     <View style={styles.container}>
       <Toast position="bottom" />
       <View style={styles.header}>
-        <Text style={styles.title}>Pedidos - Mesa: {tableNumber}</Text>
+        <Text style={styles.title}>Pedidos - Mesa: {number}</Text>
         <TouchableOpacity
           onPress={() => setIsModalVisible(true)}
           style={styles.addButton}

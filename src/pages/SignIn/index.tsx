@@ -18,7 +18,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('')
 
   async function handleLogin() {
-    if (email === '' || password === '') {
+    if (!email || !password) {
       return
     }
 
