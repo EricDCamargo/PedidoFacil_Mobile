@@ -1,9 +1,10 @@
 import React, { createContext, useState, ReactNode, useEffect } from 'react'
 import { Table } from '../types'
-import { loadTables } from '../utils/fetchData/fechTable'
+import { loadTables } from '../utils/fetchData/fetchTable'
 
 interface TableContextData {
   tables: Table[]
+
   fetchTables: () => Promise<void>
 }
 interface TableProviderProps {
@@ -17,6 +18,9 @@ export function TableProvider({ children }: TableProviderProps) {
   const fetchTables = async () => {
     setTables(await loadTables())
   }
+  useEffect(() => {
+    fetchTables()
+  }, [])
 
   return (
     <TableContext.Provider value={{ tables, fetchTables }}>

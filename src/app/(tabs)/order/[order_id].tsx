@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import {
   View,
   Text,
@@ -10,36 +10,24 @@ import {
   Alert,
   Image
 } from 'react-native'
-import { useRoute, useNavigation } from '@react-navigation/native'
 import { Feather, Ionicons } from '@expo/vector-icons'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { StackPramsList } from '../../routes/app.routes'
 import { Picker } from '@react-native-picker/picker'
-import { OrderDetails, Product } from '../../types'
-import { FinishOrderModal } from '../../components/FinishOrderModal'
-import { formatCurrency } from '../../utils'
 import Toast from 'react-native-toast-message'
-import { serviceConsumer } from '../../services/service.consumer'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Category, OrderDetails, Product } from '@/src/types'
+import { serviceConsumer } from '@/src/services/service.consumer'
 
-interface RouteParams {
-  number: string | number
-  order_id: string
-}
-
-export type CategoryProps = {
-  id: string
-  name: string
-}
+import { formatCurrency } from '@/src/utils'
+import { OrderContext } from '@/src/contexts/OrderContext'
+import { FinishOrderModal } from '../../_components/FinishOrderModal'
 
 export default function Order() {
-  const route = useRoute()
-  const { order_id, number } = route.params as RouteParams
-  const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
+  const router = useRouter()
+  const { order_id } = useLocalSearchParams()
 
-  const [category, setCategory] = useState<CategoryProps[] | []>([])
-  const [categorySelected, setCategorySelected] = useState<CategoryProps>()
+  const { products, categories } = useContext(OrderContext)
 
-  const [products, setProducts] = useState<Product[] | []>([])
+  const [categorySelected, setCategorySelected] = useState<Category>()
   const [productSelected, setProductSelected] = useState<Product | undefined>()
 
   const [filteredProducts, setFilteredProducts] = useState<Product[] | []>()
@@ -54,17 +42,12 @@ export default function Order() {
 
   useEffect(() => {
     async function loadData() {
-      const [categoryResponse, productResponse, orderResponse] =
-        await Promise.all([
-          serviceConsumer().executeGet('/category'),
-          serviceConsumer().executeGet('/products'),
-          serviceConsumer().executeGet(`/order/detail?order_id=${order_id}`)
-        ])
+      const res = await serviceConsumer().executeGet('/order/detail', {
+        order_id
+      })
 
-      setCategory([{ id: '', name: 'Todos' }, ...categoryResponse.data])
       setCategorySelected({ id: '', name: 'Todos' })
-      setProducts(productResponse.data)
-      setCurrentOrder(orderResponse.data)
+      setCurrentOrder(res.data)
     }
 
     loadData()
@@ -101,12 +84,12 @@ export default function Order() {
   async function handleCloseOrder() {
     const res = await serviceConsumer().executeDelete('/order', { order_id })
     if (res.isOk) {
-      navigation.goBack()
+      router.back()
     }
   }
 
   function handleChangeCategory(itemValue: string) {
-    const selectedCategory = category.find(cat => cat.id === itemValue)
+    const selectedCategory = categories.find(cat => cat.id === itemValue)
 
     setCategorySelected(selectedCategory!)
   }
@@ -185,7 +168,7 @@ export default function Order() {
       }
     )
     if (res.isOk) {
-      navigation.goBack()
+      router.back()
     }
     Toast.show({
       type: 'info',
@@ -197,7 +180,7 @@ export default function Order() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.hTitleContainer}>
-          <Text style={styles.title}>Pedido nº {number}</Text>
+          <Text style={styles.title}>Pedido nº {currentOrder?.number}</Text>
 
           <TouchableOpacity onPress={handleCloseOrder}>
             <Feather name="trash-2" size={28} color="#FF3F4b" />
@@ -216,7 +199,7 @@ export default function Order() {
       </View>
 
       <View style={styles.bodyContent}>
-        {category[0] && (
+        {categories[0] && (
           <Picker
             selectedValue={categorySelected?.id}
             style={styles.picker}
@@ -224,7 +207,7 @@ export default function Order() {
             dropdownIconColor={'white'}
             onValueChange={itemValue => handleChangeCategory(itemValue)}
           >
-            {category.map(cat => (
+            {categories.map(cat => (
               <Picker.Item
                 color="white"
                 style={styles.pickerItem}

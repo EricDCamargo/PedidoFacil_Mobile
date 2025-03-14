@@ -1,11 +1,11 @@
 import React, { useState, createContext, ReactNode, useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-import { api } from '../services/api'
 import { UserProps } from '../types'
 import { serviceConsumer } from '../services/service.consumer'
 import { StatusCodes } from 'http-status-codes'
 import Toast from 'react-native-toast-message'
+import { useRouter } from 'expo-router'
 
 type AuthContextData = {
   user: UserProps
@@ -36,12 +36,25 @@ const newUser: UserProps = {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const router = useRouter()
   const [user, setUser] = useState<UserProps>(newUser)
-
   const [loadingAuth, setLoadingAuth] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const isAuthenticated = !!user.name
+  useEffect(() => {
+    console.log('isAuthenticated', isAuthenticated)
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    if (loading) return
+
+    if (isAuthenticated) {
+      router.replace('/(tabs)/dashboard')
+    } else {
+      router.replace('/(auth)/signin')
+    }
+  }, [isAuthenticated, loading])
 
   useEffect(() => {
     async function getUser() {
@@ -65,7 +78,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email,
       password
     })
-    console.log(res)
     if (res.isOk && res.status === StatusCodes.OK) {
       const data: UserProps = res.data
       await AsyncStorage.setItem('@userSession', JSON.stringify(data))
@@ -73,13 +85,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(data)
       Toast.show({
         type: 'success',
-        text1: 'Login feito com sucesso!',
         text1: res.message
       })
+      router.replace('(tabs)/dashboard')
     } else {
       Toast.show({
         type: 'error',
-        text1: 'Erro ao fazer logIn!',
         text1: res.message
       })
     }
@@ -88,9 +99,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   async function signOut() {
-    await AsyncStorage.clear().then(() => {
-      setUser(newUser)
-    })
+    await AsyncStorage.clear()
+      .then(() => {
+        setUser(newUser)
+      })
+      .finally(() => {
+        router.replace('(auth)/signin')
+      })
   }
 
   return (

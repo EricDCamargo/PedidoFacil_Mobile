@@ -1,10 +1,6 @@
 import React, { useContext, useEffect } from 'react'
-import { useNavigation } from '@react-navigation/native'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { StackPramsList } from '../../routes/app.routes'
-import { AuthContext } from '../../contexts/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
-import { TableContext } from '../../contexts/TableContext'
+
 import {
   Text,
   SafeAreaView,
@@ -13,14 +9,16 @@ import {
   StyleSheet,
   View
 } from 'react-native'
-
+import { AuthContext } from '@/src/contexts/AuthContext'
+import { TableContext } from '@/src/contexts/TableContext'
 import {
-  TableStatus,
-  tableStatusColors
-} from '../../utils/records/table.record'
+  tableStatusColors,
+  TableStatus
+} from '@/src/utils/records/table.record'
+import { router } from 'expo-router'
+import { Table } from '@/src/types'
 
 export default function Dashboard() {
-  const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
   const { signOut, user } = useContext(AuthContext)
   const { tables, fetchTables } = useContext(TableContext)
 
@@ -28,11 +26,8 @@ export default function Dashboard() {
     fetchTables()
   }, [])
 
-  async function handleOpenTable(table_id: string, number: string) {
-    navigation.navigate('Orders', {
-      table_id,
-      number
-    })
+  async function handleOpenTable(table: Table) {
+    router.push(`/orders/${table.id}`)
   }
 
   async function handleLogOff() {
@@ -62,7 +57,7 @@ export default function Dashboard() {
                 backgroundColor: tableStatusColors[table.status as TableStatus]
               }
             ]}
-            onPress={() => handleOpenTable(table.id, table.number)}
+            onPress={() => handleOpenTable(table)}
           >
             <Text style={styles.tableText}>Mesa {table.number}</Text>
           </TouchableOpacity>

@@ -1,3 +1,4 @@
+import { AuthContext } from '@/src/contexts/AuthContext'
 import React, { useState, useContext } from 'react'
 import {
   View,
@@ -8,8 +9,6 @@ import {
   TouchableOpacity,
   ActivityIndicator
 } from 'react-native'
-
-import { AuthContext } from '../../contexts/AuthContext'
 
 export default function SignIn() {
   const { signIn, loadingAuth } = useContext(AuthContext)

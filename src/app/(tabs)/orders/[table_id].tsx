@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useContext, useState } from 'react'
 import {
   Text,
   View,
@@ -8,49 +8,39 @@ import {
   StyleSheet,
   Modal
 } from 'react-native'
-import {
-  useRoute,
-  useNavigation,
-  useFocusEffect
-} from '@react-navigation/native'
-import { api } from '../../services/api'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { StackPramsList } from '../../routes/app.routes'
+
 import { Ionicons } from '@expo/vector-icons'
-import { OrderProps } from '../../types'
-import { formatCurrency } from '../../utils'
 import Toast from 'react-native-toast-message'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { OrderProps } from '@/src/types'
+import { serviceConsumer } from '@/src/services/service.consumer'
 import {
   OrderStatus,
   orderStatusColors,
   orderStatusLabels
-} from '../../utils/records/order.record'
-import { serviceConsumer } from '../../services/service.consumer'
-
-interface RouteParams {
-  table_id: string
-  number: string
-}
+} from '@/src/utils/records/order.record'
+import { formatCurrency } from '@/src/utils'
+import { TableContext } from '@/src/contexts/TableContext'
 
 export default function Orders() {
-  const route = useRoute()
-  const { table_id, number } = route.params as RouteParams
-  const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>()
+  const route = useRouter()
+  const { table_id } = useLocalSearchParams()
+  const { tables } = useContext(TableContext)
 
   const [orders, setOrders] = useState<OrderProps[]>([])
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [customerName, setCustomerName] = useState('')
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     const res = await serviceConsumer().executeGet('/orders', { table_id })
     setOrders(res.data)
-  }
+  }, [table_id])
 
   useFocusEffect(
     useCallback(() => {
       loadOrders()
-    }, [table_id])
+    }, [loadOrders])
   )
 
   function toggleOrderItems(orderId: string) {
@@ -59,10 +49,7 @@ export default function Orders() {
 
   function handleOrderPress(order: OrderProps) {
     if (order.status === OrderStatus.DRAFT) {
-      navigation.navigate('Order', {
-        number: order.number,
-        order_id: order.id
-      })
+      route.push(`/order/${order.id}`)
     }
   }
 
@@ -71,16 +58,14 @@ export default function Orders() {
       table_id,
       name: customerName
     })
-    const data = res.data
+
+    const order_id = res.data.id as string
 
     if (res.isOk) {
       setIsModalVisible(false)
       setCustomerName('')
       await loadOrders()
-      navigation.navigate('Order', {
-        number: data.number,
-        order_id: data.id
-      })
+      route.push(`/order/${order_id}`)
     }
   }
 
@@ -110,11 +95,13 @@ export default function Orders() {
     await loadOrders()
   }
 
+  const tableNumber = tables.find(table => table.id === table_id)?.number
+
   return (
     <View style={styles.container}>
       <Toast position="bottom" />
       <View style={styles.header}>
-        <Text style={styles.title}>Pedidos - Mesa: {number}</Text>
+        <Text style={styles.title}>Pedidos - Mesa: {tableNumber}</Text>
         <TouchableOpacity
           onPress={() => setIsModalVisible(true)}
           style={styles.addButton}
@@ -138,7 +125,8 @@ export default function Orders() {
                 style={[
                   styles.status,
                   {
-                    backgroundColor: orderStatusColors[order.status].background
+                    backgroundColor:
+                      orderStatusColors[order.status as OrderStatus].background
                   }
                 ]}
               >
