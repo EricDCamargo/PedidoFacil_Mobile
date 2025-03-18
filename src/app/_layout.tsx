@@ -1,13 +1,20 @@
 import { Stack } from 'expo-router'
-import { AuthProvider } from '../contexts/AuthContext'
+import { AuthProvider, useAuth } from '../contexts/AuthContext'
+import React from 'react'
+import Loading from './_components/loading/loading'
+
+const RootRoutes = () => {
+  const { loading } = useAuth()
+
+  if (loading) return <Loading />
+
+  return <Stack screenOptions={{ headerShown: false }} />
+}
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)/signin" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
+      <RootRoutes />
     </AuthProvider>
   )
 }

@@ -2,14 +2,14 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 
 import { Feather } from '@expo/vector-icons'
-import { OrderItem } from '../../types'
+import { OrderItem } from '@/src/types'
 
 interface ItemProps {
   item: OrderItem
   deleteItem: (item_id: string) => void
 }
 
-export function ListItem({ item, deleteItem }: ItemProps) {
+export default function ListItem({ item, deleteItem }: ItemProps) {
   function handleDeleteItem() {
     deleteItem(item.id)
   }

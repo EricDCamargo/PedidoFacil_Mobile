@@ -1,3 +1,4 @@
+import { Category } from '@/src/types'
 import React from 'react'
 import {
   View,
@@ -8,23 +9,20 @@ import {
   ScrollView
 } from 'react-native'
 
-import { CategoryProps } from '../../pages/Order'
-
 interface ModalPickerProps {
-  options: CategoryProps[]
+  options: Category[]
   handleCloseModal: () => void
-  selectedItem: (item: CategoryProps) => void
+  selectedItem: (item: Category) => void
 }
 
 const { width: WIDTH, height: HEIGHT } = Dimensions.get('window')
 
-export function ModalPicker({
+export default function ModalPicker({
   options,
   handleCloseModal,
   selectedItem
 }: ModalPickerProps) {
-  function onPressItem(item: CategoryProps) {
- 
+  function onPressItem(item: Category) {
     selectedItem(item)
     handleCloseModal()
   }

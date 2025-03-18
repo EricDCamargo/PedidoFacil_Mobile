@@ -19,7 +19,7 @@ import { serviceConsumer } from '@/src/services/service.consumer'
 
 import { formatCurrency } from '@/src/utils'
 import { OrderContext } from '@/src/contexts/OrderContext'
-import { FinishOrderModal } from '../../_components/FinishOrderModal'
+import FinishOrderModal from '../../_components/FinishOrderModal'
 
 export default function Order() {
   const router = useRouter()

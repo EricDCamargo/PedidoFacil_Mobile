@@ -3069,11 +3069,6 @@ expo-router@^4.0.17:
     semver "~7.6.3"
     server-only "^0.0.1"
 
-expo-status-bar@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/expo-status-bar/-/expo-status-bar-2.0.1.tgz#fc07726346dc30fbb68aadb0d7890b34fba42eee"
-  integrity sha512-AkIPX7jWHRPp83UBZ1iXtVvyr0g+DgBVvIXTtlmPtmUsm8Vq9Bb5IGj86PW8osuFlgoTVAg7HI/+Ok7yEYwiRg==
-
 expo@~52.0.31:
   version "52.0.31"
   resolved "https://registry.yarnpkg.com/expo/-/expo-52.0.31.tgz#ec6a5ac276d936ae1349c6127b6a6fff46c42aa4"

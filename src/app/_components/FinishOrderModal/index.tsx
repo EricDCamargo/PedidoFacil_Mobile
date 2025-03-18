@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   StyleSheet
 } from 'react-native'
-import { OrderDetails } from '../../types'
-import { ListItem } from '../ListItem'
+
+import ListItem from '../ListItem'
+import { OrderDetails } from '@/src/types'
 
 type FinishOrderModalProps = {
   visible: boolean
@@ -18,7 +19,7 @@ type FinishOrderModalProps = {
   handleDeleteItem: (item_id: string) => void
 }
 
-export function FinishOrderModal({
+export default function FinishOrderModal({
   visible,
   onClose,
   currentOrder,

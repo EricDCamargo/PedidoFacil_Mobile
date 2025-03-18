@@ -2,14 +2,14 @@ import AppProvider from '@/src/contexts/providers'
 import { Stack } from 'expo-router'
 import React from 'react'
 
-export default function TabsLayout() {
+export default function Layout() {
   return (
     <AppProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen
-          name="dashboard"
+          name="index"
           options={{
-            title: 'Dashboard'
+            title: 'Tables'
           }}
         />
         <Stack.Screen

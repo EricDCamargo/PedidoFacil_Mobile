@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { Suspense, useContext, useEffect } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 
 import {
@@ -18,7 +18,7 @@ import {
 import { router } from 'expo-router'
 import { Table } from '@/src/types'
 
-export default function Dashboard() {
+export default function Tables() {
   const { signOut, user } = useContext(AuthContext)
   const { tables, fetchTables } = useContext(TableContext)
 
@@ -43,6 +43,7 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
       <Text style={styles.title}>Selecione uma mesa</Text>
+
       <FlatList
         data={tables}
         numColumns={2}

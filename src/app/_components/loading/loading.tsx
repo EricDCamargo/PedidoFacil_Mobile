@@ -1,11 +1,33 @@
-import { StyleSheet } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import React, { useEffect, useRef } from 'react'
+import { StyleSheet, View, Animated, Easing } from 'react-native'
+import { Feather } from '@expo/vector-icons'
 
 export default function Loading() {
+  const rotateValue = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    const rotateAnimation = Animated.loop(
+      Animated.timing(rotateValue, {
+        toValue: 1,
+        duration: 3000,
+        easing: Easing.linear,
+        useNativeDriver: true
+      })
+    )
+    rotateAnimation.start()
+  }, [rotateValue])
+
+  const rotate = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  })
+
   return (
-    <div style={styles.container}>
-      <Ionicons name="refresh-circle" size={28} color="#FFF" />
-    </div>
+    <View style={styles.container}>
+      <Animated.View style={{ transform: [{ rotate }] }}>
+        <Feather name="loader" size={64} color="#FFF" />
+      </Animated.View>
+    </View>
   )
 }
 
@@ -16,12 +38,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#1d1d2e',
     color: 'white'
-  },
-  icon: {
-    width: 40,
-    height: 40,
-    transform: [{ rotate: '360deg' }]
   }
 })
