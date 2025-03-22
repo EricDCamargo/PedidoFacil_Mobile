@@ -1,4 +1,3 @@
-import { AuthProvider } from '@/src/contexts/AuthContext'
 import { TableProvider } from '@/src/contexts/TableContext'
 import { OrderProvider } from './OrderContext'
 

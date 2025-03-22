@@ -1,4 +1,4 @@
-import React, { Suspense, useContext, useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 
 import {

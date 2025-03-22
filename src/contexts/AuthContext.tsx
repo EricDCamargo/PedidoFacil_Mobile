@@ -6,12 +6,11 @@ import React, {
   useContext
 } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
 import { UserProps } from '../types'
 import { serviceConsumer } from '../services/service.consumer'
 import { StatusCodes } from 'http-status-codes'
 import Toast from 'react-native-toast-message'
-import { useRouter, useSegments } from 'expo-router'
+import { useRouter } from 'expo-router'
 
 type AuthContextData = {
   user: UserProps | null
@@ -34,7 +33,6 @@ export const AuthContext = createContext({} as AuthContextData)
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter()
-  const segments = useSegments()
 
   const [user, setUser] = useState<UserProps | null>(null)
   const [loadingAuth, setLoadingAuth] = useState(false)
@@ -53,20 +51,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(res.data)
         }
       }
+      setLoading(false)
     }
-    setLoading(false)
+
     getUser()
   }, [])
 
   useEffect(() => {
     if (loading) return
 
-    if (!user && segments[0] !== '(auth)') {
-      router.replace('(auth)')
-    } else if (user && segments[0] === '(auth)') {
+    if (user) {
       router.replace('(dashboard)')
+    } else {
+      router.replace('(auth)')
     }
-  }, [user, segments, loading])
+  }, [user, loading])
 
   async function signIn({ email, password }: SignInProps) {
     setLoadingAuth(true)
