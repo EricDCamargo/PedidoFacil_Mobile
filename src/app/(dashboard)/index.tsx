@@ -9,7 +9,7 @@ import {
   StyleSheet,
   View
 } from 'react-native'
-import { AuthContext } from '@/src/contexts/AuthContext'
+import { useAuth } from '@/src/contexts/AuthContext'
 import { TableContext } from '@/src/contexts/TableContext'
 import {
   tableStatusColors,
@@ -19,7 +19,7 @@ import { router } from 'expo-router'
 import { Table } from '@/src/types'
 
 export default function Tables() {
-  const { signOut, user } = useContext(AuthContext)
+  const { signOut, user } = useAuth()
   const { tables, fetchTables } = useContext(TableContext)
 
   useEffect(() => {

@@ -11,6 +11,8 @@ import { serviceConsumer } from '../services/service.consumer'
 import { StatusCodes } from 'http-status-codes'
 import Toast from 'react-native-toast-message'
 import { useRouter } from 'expo-router'
+import { SafeAreaView } from 'react-native'
+import Loading from '../app/_components/loading/loading'
 
 type AuthContextData = {
   user: UserProps | null
@@ -57,16 +59,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     getUser()
   }, [])
 
-  useEffect(() => {
-    if (loading) return
-
-    if (user) {
-      router.replace('(dashboard)')
-    } else {
-      router.replace('(auth)')
-    }
-  }, [user, loading])
-
   async function signIn({ email, password }: SignInProps) {
     setLoadingAuth(true)
 
@@ -77,13 +69,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (res.isOk && res.status === StatusCodes.OK) {
       const data: UserProps = res.data
       await AsyncStorage.setItem('@userSession', JSON.stringify(data))
-
-      setUser(data)
-
       Toast.show({
         type: 'success',
         text1: res.message
       })
+      setUser(data)
+      router.replace('(dashboard)')
     } else {
       Toast.show({
         type: 'error',
@@ -109,7 +100,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signOut
       }}
     >
-      {children}
+      {loading ? (
+        <SafeAreaView>
+          <Loading />
+        </SafeAreaView>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   )
 }

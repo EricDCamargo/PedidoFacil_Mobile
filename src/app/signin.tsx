@@ -1,4 +1,4 @@
-import { AuthContext } from '@/src/contexts/AuthContext'
+import { AuthContext, useAuth } from '@/src/contexts/AuthContext'
 import React, { useState, useContext } from 'react'
 import {
   View,
@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 
 export default function SignIn() {
-  const { signIn, loadingAuth } = useContext(AuthContext)
+  const { signIn, loadingAuth } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,7 +26,7 @@ export default function SignIn() {
 
   return (
     <View style={styles.container}>
-      <Image style={styles.logo} source={require('../../assets/logo.png')} />
+      <Image style={styles.logo} source={require('../assets/logo.png')} />
 
       <View style={styles.inputContainer}>
         <TextInput

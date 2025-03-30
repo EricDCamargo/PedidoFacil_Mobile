@@ -1,30 +1,16 @@
+import { AuthContext, useAuth } from '@/src/contexts/AuthContext'
 import AppProvider from '@/src/contexts/providers'
-import { Stack } from 'expo-router'
-import React from 'react'
+import { Redirect, Slot } from 'expo-router'
+import React, { useContext } from 'react'
 
 export default function Layout() {
-  return (
+  const { user } = useAuth()
+
+  return !user ? (
+    <Redirect href="/signin/" />
+  ) : (
     <AppProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen
-          name="index"
-          options={{
-            title: 'Tables'
-          }}
-        />
-        <Stack.Screen
-          name="orders/[table_id]"
-          options={{
-            title: 'Orders'
-          }}
-        />
-        <Stack.Screen
-          name="order/[order_id]"
-          options={{
-            title: 'Order'
-          }}
-        />
-      </Stack>
+      <Slot />
     </AppProvider>
   )
 }
