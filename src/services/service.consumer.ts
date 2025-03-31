@@ -1,8 +1,9 @@
 import { getCookieClient } from '../lib/cookieClient'
 import { debug, api } from './api'
+import { ENVIRONMENT } from '@env'
 
 const { debugError, debugSuccess } = debug
-const environment = process.env.ENVIRONMENT
+const environment = ENVIRONMENT
 interface ResponsePromise {
   [x: string]: any
   data: any | Array<any>

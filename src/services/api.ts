@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios'
 import { AuthTokenError } from './errors/AuthTokenErorr'
 import { StatusCodes } from 'http-status-codes'
 import Toast from 'react-native-toast-message'
+import { PUBLIC_API_URL } from '@env'
 
 const HTTTP_STATUS = Object.freeze({
   PENDING: 'PENDING',
@@ -19,7 +20,7 @@ const debug = {
     console.log('%c' + msg, 'color:' + 'green' + ';font-weight:bold;')
   }
 }
-const baseURL = process.env.PUBLIC_API_URL
+const baseURL = PUBLIC_API_URL
 
 const setupAPIClient = () => {
   const api = axios.create({
