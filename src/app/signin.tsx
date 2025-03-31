@@ -1,5 +1,5 @@
-import { AuthContext, useAuth } from '@/src/contexts/AuthContext'
-import React, { useState, useContext } from 'react'
+import { useAuth } from '@/src/contexts/AuthContext'
+import React, { useState } from 'react'
 import {
   View,
   Text,

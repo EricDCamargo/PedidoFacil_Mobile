@@ -11,7 +11,7 @@ import { serviceConsumer } from '../services/service.consumer'
 import { StatusCodes } from 'http-status-codes'
 import Toast from 'react-native-toast-message'
 import { useRouter } from 'expo-router'
-import { SafeAreaView } from 'react-native'
+import { SafeAreaView, StatusBar } from 'react-native'
 import Loading from '../app/_components/loading/loading'
 
 type AuthContextData = {
@@ -100,13 +100,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signOut
       }}
     >
-      {loading ? (
-        <SafeAreaView>
-          <Loading />
-        </SafeAreaView>
-      ) : (
-        children
-      )}
+      <>
+        <StatusBar backgroundColor={'#1d1d2e'} barStyle="light-content" />
+        {loading ? (
+          <SafeAreaView>
+            <Loading />
+          </SafeAreaView>
+        ) : (
+          children
+        )}
+      </>
     </AuthContext.Provider>
   )
 }
