@@ -25,7 +25,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ericdcamargo.PedidoFacil_Mobile"
+      "package": "com.ericdcamargo.PedidoFacil_Mobile",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
+      "networkSecurityConfig": "./src/config/network_security_config.xml"
     },
     "web": {
       "favicon": "./assets/favicon.png"
